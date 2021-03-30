@@ -1,0 +1,24 @@
+
+Come aggiungere un'altra telecamera?
+
+Recarsi nella cartella:
+cd gedit /catkin_ws/src/ERC_2021_simulator/ur_description/urdf
+
+Aprire il file:
+gedit ur3.urdf.xacro 
+
+
+Portarsi ad una delle ultime righe, esattamente sopra la riga :</xacro:macro>
+A questo punto incollare il codice qui sotto
+
+    <!-- PROVA CAMERA -->
+    <link name="camera_link_fix"/>
+    <!-- Attach user left realsense to base link -->
+    <joint name="camera_joint_fix" type="fixed">
+      <origin xyz="-0.3 0.3 0.55" rpy="0 0.2 -0.17" />
+      <parent link="${prefix}base_link" />
+      <child link="camera_link_fix" />
+    </joint>
+    <xacro:intel_realsense_mount prefix="camera_joint_fix" topic="camera_image_fix" parent_link="camera_link_fix"/>
+
+p.s dovrebbe esserci un altra telecamera già presente nel modello prima di questa che stiamo creando. Quindi il codice andrebbe incollato esettamente sotto il codice di quella telecamera.
