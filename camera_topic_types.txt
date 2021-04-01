@@ -1,0 +1,186 @@
+========IMAGES============
+/camera_image/color/image_raw
+Type: sensor_msgs/Image
+
+Publishers: 
+ * /gazebo (port:46415/)
+
+Subscribers: 
+ * /rviz_... (port: 40277/)
+
+/camera_image/depth/image_rect_raw
+Type: sensor_msgs/Image
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+-----------------------------------------------
+========COMPRESSED IMAGES================
+/camera_image/color/image_raw/compressed
+Type: sensor_msgs/CompressedImage
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+/camera_image/color/image_raw/compressedDepth
+Type: sensor_msgs/CompressedImage
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+--------------------------------------------------------
+=======POINT CLOUDS==================
+/camera_image/depth/color/points
+Type: sensor_msgs/PointCloud2
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+-------------------------------------------------------
+/camera_image/color/camera_info
+Type: sensor_msgs/CameraInfo
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: 
+ * /rviz_... (port: 40277/)
+
+header: 
+  seq: 42108
+  stamp: 
+    secs: 2227
+    nsecs: 105000000
+  frame_id: "camera_realsense_gazebo"
+height: 480
+width: 640
+distortion_model: "plumb_bob"
+D: [1e-08, 1e-08, 1e-08, 1e-08, 1e-08]
+K: [462.1379497504639, 0.0, 320.5, 0.0, 462.1379497504639, 240.5, 0.0, 0.0, 1.0]
+R: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+P: [462.1379497504639, 0.0, 320.5, -0.0, 0.0, 462.1379497504639, 240.5, 0.0, 0.0, 0.0, 1.0, 0.0]
+binning_x: 0
+binning_y: 0
+roi: 
+  x_offset: 0
+  y_offset: 0
+  height: 0
+  width: 0
+  do_rectify: False
+
+
+
+/camera_image/depth/camera_info
+Type: sensor_msgs/CameraInfo
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+header: 
+  seq: 28
+  stamp: 
+    secs: 2298
+    nsecs: 504000000
+  frame_id: "camera_realsense_gazebo"
+height: 480
+width: 640
+distortion_model: "plumb_bob"
+D: [1e-08, 1e-08, 1e-08, 1e-08, 1e-08]
+K: [462.1379497504639, 0.0, 320.5, 0.0, 462.1379497504639, 240.5, 0.0, 0.0, 1.0]
+R: [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+P: [462.1379497504639, 0.0, 320.5, -0.0, 0.0, 462.1379497504639, 240.5, 0.0, 0.0, 0.0, 1.0, 0.0]
+binning_x: 0
+binning_y: 0
+roi: 
+  x_offset: 0
+  y_offset: 0
+  height: 0
+  width: 0
+  do_rectify: False
+
+----------------------------------------------
+======PARAMETER UPDATES AND DESCRIPTION=======
+/camera_image/color/image_raw/compressed/parameter_updates
+Type: dynamic_reconfigure/Config
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+/camera_image/color/image_raw/compressedDepth/parameter_updates
+Type: dynamic_reconfigure/Config
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+/camera_image/color/image_raw/theora/parameter_updates
+Type: dynamic_reconfigure/Config
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+/camera_image/parameter_updates
+Type: dynamic_reconfigure/Config
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+
+/camera_image/color/image_raw/compressed/parameter_descriptions
+Type: dynamic_reconfigure/ConfigDescription
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+
+/camera_image/color/image_raw/compressedDepth/parameter_descriptions
+Type: dynamic_reconfigure/ConfigDescription
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+/camera_image/color/image_raw/theora/parameter_descriptions
+Type: dynamic_reconfigure/ConfigDescription
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+/camera_image/parameter_descriptions
+Type: dynamic_reconfigure/ConfigDescription
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+------------------------------------------------------
+
+/camera_image/color/image_raw/theora
+Type: theora_image_transport/Packet
+
+Publishers: 
+ * /gazebo 
+
+Subscribers: None
+
+
