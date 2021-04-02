@@ -1,0 +1,33 @@
+Come inserire una mappatura 3d da gazebo a rviz?
+Tramite la camera presente su gazebo, le informazioni vengono proiettate su rviz. A quel punto il planner riconosce gli ostacoli e può evitarli.
+
+Come aggiungere questa possibilità?
+1) Segui il tutorial linkato al punto 2) o segui il mio tutorial al punto 3)
+2) Io ho seguito questo tutorial: https://ros-planning.github.io/moveit_tutorials/doc/perception_pipeline/perception_pipeline_tutorial.html
+3) 
+- Bisogna avere una camera funzionante che scriva su un topic.
+- Aggiungere il file : “sensors_kinect_pointcloud.yaml” dentro la cartella ur3_moveit_config/config/ e scriverci dentro:
+
+sensors:
+  - sensor_plugin: occupancy_map_monitor/PointCloudOctomapUpdater
+    point_cloud_topic: /camera_image_fix/depth/color/points
+    max_range: 5.0
+    point_subsample: 1
+    padding_offset: 0.1
+    padding_scale: 1.0
+    max_update_rate: 1.0
+    filtered_cloud_topic: filtered_cloud
+
+
+- Nella riga "point_cloud_topic" si deve inserire il topic su cui la tua camera sta pubblicando
+- Recarsi in ur3_moveit_config/launch/sensor_manager.launch.xml e modificarlo come segue:
+
+<rosparam command="load" file="$(find ur3_moveit_config)/config/sensors_kinect_pointcloud.yaml" />
+  <param name="octomap_resolution" type="double" value="0.025" />
+  <param name="max_range" type="double" value="5.0" />
+<param name="octomap_resolution" type="double" value="0.05" />
+
+Devono essere aggiunte queste quattro righe, non so in che ordine, non so nemmeno se ci vadano tutte. A me così funziona. Controllate che alcune di queste non siano già state aggiunte. Fine del tutorial
+
+
+
