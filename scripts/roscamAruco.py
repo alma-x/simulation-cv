@@ -12,6 +12,13 @@ from sensor_msgs.msg import CompressedImage as CsensImg
 #from cv2 import aruco as aruco
 import cv2.aruco as aruco
 
+#------------------------------------------------
+#NOTE:
+#   tVect       manipulatore
+#    X             -Z
+#    Y              Y
+#    Z              X
+#------------------------------------------------
 
 ARUCO_PARAMETERS = aruco.DetectorParameters_create()
 ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_ARUCO_ORIGINAL)
