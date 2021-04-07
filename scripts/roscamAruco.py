@@ -16,14 +16,14 @@ import cv2.aruco as aruco
 ARUCO_PARAMETERS = aruco.DetectorParameters_create()
 ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_ARUCO_ORIGINAL)
 
-cameraMatr = np.matrix([[1.12055622e+03, 0.00000000e+00, 2.83691118e+02],\
-                                 [0.00000000e+00, 1.13040969e+03, 6.36980150e+02],\
+cameraMatr = np.matrix([[462.1379497504639, 0.0, 320.5],\
+                                 [0.0, 462.1379497504639, 240.5],\
                                  [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
-cameraDistCoefs = np.array([ 4.59103398e-01, -3.67204965e+00,  1.91186052e-03, -7.83898893e-03, 6.07110328e+00])
+cameraDistCoefs = np.array([1e-08, 1e-08, 1e-08, 1e-08, 1e-08])
 
-cameraFocLen= 3558.572811
+cameraFocLen= 462.137
 
-markerSize=40#mm
+markerSize=90#mm
 #targetImg=cv.imread('test-imgs/moriginal/m582orig.jpg')
 #_,targetId,_=aruco.detectMarkers(targetImg,ARUCO_DICT,parameters=ARUCO_PARAMETERS)#targetId=582
 
@@ -185,7 +185,7 @@ def computeDistanceSingle(imgShape,corners,marker_real_world_mm, debug=0):
     # ====== Camera parameters ==========
     # Sensor is 5.64mm wide
     # Original resolution is 4032x1960
-    focal_lenght = 3558.572811
+    focal_lenght = 426
     # ====== End camera parameters ======
 
     # Size of the square marker
@@ -195,7 +195,7 @@ def computeDistanceSingle(imgShape,corners,marker_real_world_mm, debug=0):
     
     marker_dim_px = np.sqrt((corners[0][0][0] - corners[0][3][0])**2 + (corners[0][0][1] - corners[0][3][1])**2)
         
-    distance_mm = marker_real_world_mm * (np.max(imgShape) / 4032) * focal_lenght / marker_dim_px
+    distance_mm = marker_real_world_mm * (np.max(imgShape) / 640) * focal_lenght / marker_dim_px
     if debug: print("Distance: {}cm".format(round(distance_mm / 10, 1)))
     return distance_mm
 
@@ -226,7 +226,7 @@ def singleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix, camera_dist
     imgShape = queryImg.shape
     
     markerDim_px = np.sqrt((corners[0][0][0] - corners[0][3][0])**2 + (corners[0][0][1] - corners[0][3][1])**2)
-    distnc_mm = markerSize_mm * (np.max(imgShape) / 4032) * focal_length / markerDim_px
+    distnc_mm = markerSize_mm * (np.max(imgShape) / 640) * focal_length / markerDim_px
     
     mrkSiz_cm= round(markerSize_mm/10,1)
     markerSquare_cm = np.float32([[0, 0, 0], [0, mrkSiz_cm, 0], [mrkSiz_cm, mrkSiz_cm, 0], [mrkSiz_cm, 0, 0]])
@@ -247,7 +247,7 @@ def singleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix, camera_dist
     
     rotation_matrix = cv.Rodrigues(rvecs)[0]# From rvecs compute the rotation matrix
     
-    P = np.hstack((rotation_matrix, tvecs))# Get the Projection matrix
+    P = np.hstack((rotation_matrix, 10*tvecs))# Get the Projection matrix
 
 #    euler_angles_degrees = - cv.decomposeProjectionMatrix(P)[6]
 #    euler_angles_radians = euler_angles_degrees * np.pi / 180
@@ -263,14 +263,14 @@ from cv_bridge import CvBridge
 bridge=CvBridge()
  
 def callbackRaw(raw_img):
-    cameraMatr = np.matrix([[1.12055622e+03, 0.00000000e+00, 2.83691118e+02],\
-                                 [0.00000000e+00, 1.13040969e+03, 6.36980150e+02],\
-                                 [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
-    cameraDistCoefs = np.array([ 4.59103398e-01, -3.67204965e+00,  1.91186052e-03, -7.83898893e-03, 6.07110328e+00])
+    cameraMatr = np.matrix([[462.1379497504639, 0.0, 320.5],\
+                                     [0.0, 462.1379497504639, 240.5],\
+                                     [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+    cameraDistCoefs = np.array([1e-08, 1e-08, 1e-08, 1e-08, 1e-08])
 
-    cameraFocLen= 3558.572811
+    cameraFocLen= 462.137
 
-    markerSize=40#mm
+    markerSize=90#mm
     ARUCO_PARAMETERS = aruco.DetectorParameters_create()
     ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_ARUCO_ORIGINAL)
     #imgDim=(width,heigth)=(data.height, data.width)
@@ -291,9 +291,9 @@ def callbackRaw(raw_img):
                 
             detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,markerSize,
                                           cameraMatr,cameraDistCoefs,cameraFocLen,superimpAru='distance')
-#            rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
-                
-            print('marker',mId, "has distance:",aruDistnc)
+            rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
+            print("tVect: ",tVect)
+#             print('marker',mId, "has distance:",aruDistnc)
 #            cv.imshow('detmarkersected ',detAruImg)
     else:
 #        print("no marker detected")   
