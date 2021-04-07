@@ -8,6 +8,7 @@ import numpy as np
 from sensor_msgs.msg import Image as sensImg
 from sensor_msgs.msg import CompressedImage as CsensImg
 #frofm sensor_msgs.msg import PointCloud2 as sensPCld
+from std_msgs.msg import Float64MultiArray
 
 #from cv2 import aruco as aruco
 import cv2.aruco as aruco
@@ -18,6 +19,16 @@ import cv2.aruco as aruco
 #    X             -Z
 #    Y              Y
 #    Z              X
+#matrice rotazione da manipulatore a camera:
+#
+#        Ry(pi/2)= 0 0 1
+#                  0 1 0
+#                 -1 0 0
+#PUBLISHER DI ARRAY:
+#aruco_position_pub = rospy.Publisher('/almax/aruco_target',Float64MultiArray,queue_size=20)
+#array = [69.1,0,1,33,1,1,1,0]
+#robaccia = Float64MultiArray(data=array)
+#aruco_position_pub.publish(robaccia)
 #------------------------------------------------
 
 ARUCO_PARAMETERS = aruco.DetectorParameters_create()
@@ -299,9 +310,10 @@ def callbackRaw(raw_img):
             detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,markerSize,
                                           cameraMatr,cameraDistCoefs,cameraFocLen,superimpAru='distance')
             rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
-            print("tVect: ",tVect)
-#             print('marker',mId, "has distance:",aruDistnc)
-#            cv.imshow('detmarkersected ',detAruImg)
+            print("rotMatr: ",rotMatr)
+#           print("tVect: ",tVect)
+#           print('marker',mId, "has distance:",aruDistnc)
+#           cv.imshow('detmarkersected ',detAruImg)
     else:
 #        print("no marker detected")   
         detAruImg=cv_image.copy()
@@ -337,9 +349,10 @@ def callbackCompr(cmpr_img):#(1)
 #    cv.imshow("point cloud image", cv_image)
 #    cv.waitKey(15)
     
-def listener(myCam,myTop,myType,myCallk):
+def listener(myCam,myTop,myType,myCallk):    
     rospy.init_node('camera_listener', anonymous=True)
     rospy.Subscriber(myCam+myTop,myType,myCallk,queue_size = 1)
+
 #    rospy.Subscriber("/camera_image_fix/color/image_raw/compressed",CsensImg,callbackCompr,queue_size = 1)
     try:
         rospy.spin()
@@ -373,7 +386,8 @@ if __name__ == '__main__':
     myTopicFull=topicDict['raw']
     print('connecting to:'+myCamera+myTopicFull[0]+'...')
     listener(myCamera,myTopicFull[0],myTopicFull[1],myTopicFull[2])
- 
+
+
 
 #bibliography
 #     (1)
