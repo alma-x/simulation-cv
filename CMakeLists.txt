@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  message_generation
   #time
 )
 
@@ -166,8 +167,7 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
  catkin_install_python(PROGRAMS
-  scripts/roscamAruco.py
-  scripts/roscamLibrary.py
+  scripts/roscam1.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 
