@@ -36,7 +36,7 @@ def IdOverAruco(ids, corners, grayQueryImg):
             #print("Corners:", corner)
             cv.fillPoly(arucoIDImg, corner.astype(int), (230, 230, 230))
 
-            (textX, textY )=center = np.abs(corner[0][0] + corner[0][2]) / 2
+            (textX, textY )= np.abs(corner[0][0] + corner[0][2]) / 2
             textsizeX, textsizeY = cv.getTextSize(str(i[0]), font, 1, 3)[0]
             textX = (textX - textsizeX / 2).astype(int)
             textY = (textY + textsizeY / 2).astype(int)
@@ -48,7 +48,7 @@ def distOverAruco(distanceMarker, corners, queryImg):
     font = cv.FONT_HERSHEY_SIMPLEX
 
     cv.fillPoly(queryImg, corners.astype(int), (230, 230, 230))    
-    (textX, textY)=center = np.abs(corners[0][0] + corners[0][2]) / 2    
+    (textX, textY) = np.abs(corners[0][0] + corners[0][2]) / 2    
     textsizeX, textsizeY = cv.getTextSize(str(distanceMarker), font, 1, 3)[0]    
     textX = (textX - textsizeX / 2).astype(int)
     textY = (textY + textsizeY / 2).astype(int)    
