@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-Input=input()
-if Input=='0':
-    print('00000')
-else:
-    print(Input)
+toggleIf=0
+
+myvalue=100*(1+ (0 if toggleIf else 10))
+print(myvalue)

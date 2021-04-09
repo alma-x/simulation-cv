@@ -17,17 +17,6 @@ from roscamLibrary3 import singleAruRelPos
 from cv_bridge import CvBridge
 
 
-#------------------------------------------------
-#NOTE:
-#   tVect       manipulatore
-#    X             -Z
-#    Y              Y
-#    Z              X
-#matrice rotazione da manipulatore a camera:
-#
-#        Ry(pi/2)= 0 0 1
-#                  0 1 0
-#                 -1 0 0
 #PUBLISHER DI ARRAY:
 #aruco_position_pub = rospy.Publisher('/almax/aruco_target',Float64MultiArray,queue_size=20)
 #array = [69.1,0,1,33,1,1,1,0]
@@ -76,7 +65,7 @@ bridge=CvBridge()
  
 def callbackRaw(raw_img):
     global aruco_success
-    global vettore
+    global msgVector
     
 #    cv.imshow("raw image", cv_image)
     #imgDim=(width,heigth)=(data.height, data.width)
@@ -90,11 +79,11 @@ def callbackRaw(raw_img):
             
         for mId, aruPoints in zip(detIds, detCorners):
                 
-            detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
+            detAruImg,aruDistnc,Pmatr,rVecs=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
                                           cameraMatr,cameraDistCoefs,cameraFocLen,superimpAru='distance')
             rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
 #            print("rotMatr: ",rotMatr)
-#            print("tVect: ",tVect)
+            print("tVect: ",tVect)
 #            print('marker',mId, "has distance:",aruDistnc)
             if mId==targetMarkId:
                 aruco_success=True
@@ -109,17 +98,30 @@ def callbackRaw(raw_img):
     cv.imshow('video feed',detAruImg)
     cv.waitKey(15)
     
-    
+toggleWristLengthRecovery=0
+
 def callback_service(req):
     global aruco_success
     global msgVector
 #    if aruco_success: print("ARUCO SUCCESS:TRUE")
     return aruco_serviceResponse(
             success=aruco_success,
-            x=msgVector[0],
-            y=msgVector[1],   
-            z=msgVector[2]
+            x=0.001*msgVector[2] +(0.08 if toggleWristLengthRecovery else 0),#[m]
+            y=0.001*msgVector[0],   
+            z=0.001*msgVector[1]
             )
+    
+#------------------------------------------------
+#NOTE:
+#   tVect       manipulatore
+#    X             -Z
+#    Y              Y
+#    Z              X
+#matrice rotazione da manipulatore a camera:
+#
+#        Ry(pi/2)= 0 0 1
+#                  0 1 0
+#                 -1 0 0
     
     
 def callbackCompr(cmpr_img):#(1)
