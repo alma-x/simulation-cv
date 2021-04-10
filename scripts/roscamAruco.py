@@ -4,7 +4,6 @@ import rospy
 import numpy as np
 
 #from std_msgs.msg import String
-#from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import Image as sensImg
 from sensor_msgs.msg import CompressedImage as CsensImg
 #frofm sensor_msgs.msg import PointCloud2 as sensPCld
@@ -13,23 +12,17 @@ from ur3_control.srv import aruco_service,aruco_serviceResponse
 import cv2 as cv
 import cv2.aruco as aruco
 #from cv2 import aruco as aruco
-from roscamLibrary import singleAruRelPos
 from cv_bridge import CvBridge
+from roscamLibrary import singleAruRelPos as singleAruRelPos
 
 
-#PUBLISHER DI ARRAY:
-#aruco_position_pub = rospy.Publisher('/almax/aruco_target',Float64MultiArray,queue_size=20)
-#array = [69.1,0,1,33,1,1,1,0]
-#robaccia = Float64MultiArray(data=array)
-#aruco_position_pub.publish(robaccia)
-#------------------------------------------------
 
 ARUCO_PARAMETERS = aruco.DetectorParameters_create()
 ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_ARUCO_ORIGINAL)
 
 cameraMatr = np.matrix([[462.1379497504639, 0.0, 320.5],\
-                                 [0.0, 462.1379497504639, 240.5],\
-                                 [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+                        [0.0, 462.1379497504639, 240.5],\
+                        [0.0000e+00, 0.0000e+00, 1.0000e+00]])
 cameraDistCoefs = np.array([1e-08, 1e-08, 1e-08, 1e-08, 1e-08])
 
 cameraFocLen= 462.137
@@ -83,7 +76,7 @@ def callbackRaw(raw_img):
                                           cameraMatr,cameraDistCoefs,cameraFocLen,superimpAru='distance')
             rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
 #            print("rotMatr: ",rotMatr)
-            print("tVect: ",tVect)
+#            print("tVect: ",tVect)
 #            print('marker',mId, "has distance:",aruDistnc)
             if mId==targetMarkId:
                 aruco_success=True
@@ -94,7 +87,6 @@ def callbackRaw(raw_img):
 #        print("no marker detected")
         aruco_success=False
         detAruImg=cv_image.copy()#
-
     cv.imshow('video feed',detAruImg)
     cv.waitKey(15)
     
@@ -113,15 +105,15 @@ def callback_service(req):
     
 #------------------------------------------------
 #NOTE:
-#   tVect       manipulatore
-#    X             -Z
-#    Y              Y
-#    Z              X
-#matrice rotazione da manipulatore a camera:
+#   tVect       tool0/maniulator e.e reference frame
+#    X              Z
+#    Y              x
+#    Z              Y
+#rotation matrix: tVect=R*tool0_vects
 #
-#        Ry(pi/2)= 0 0 1
+#        	R= 0 0 1
+#                  1 0 0
 #                  0 1 0
-#                 -1 0 0
     
     
 def callbackCompr(cmpr_img):#(1)
