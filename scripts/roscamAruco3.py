@@ -15,7 +15,12 @@ import cv2.aruco as aruco
 from cv_bridge import CvBridge
 from roscamLibrary3 import singleAruRelPos
 
-
+#PUBLISHER DI ARRAY:
+#aruco_position_pub = rospy.Publisher('/almax/aruco_target',Float64MultiArray,queue_size=20)
+#array = [69.1,0,1,33,1,1,1,0]
+#robaccia = Float64MultiArray(data=array)
+#aruco_position_pub.publish(robaccia)
+#------------------------------------------------
 
 ARUCO_PARAMETERS = aruco.DetectorParameters_create()
 ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_ARUCO_ORIGINAL)
@@ -31,7 +36,8 @@ cameraFocLen= 462.137
 #_,targetId,_=aruco.detectMarkers(targetImg,ARUCO_DICT,parameters=ARUCO_PARAMETERS)#targetId=582
 
 aruco_success=False
-msgVector=[0,0,0]
+msgVector=[0,0,0]#np.zeros([numRows,numCols])
+msgRotMatrix=[[0,0,0],[0,0,0],[0,0,0]]#should this be a matrix?
 
 aruTargetDict={'cube5s':(582,
                         40),
@@ -59,7 +65,7 @@ bridge=CvBridge()
 def callbackRaw(raw_img):
     global aruco_success
     global msgVector
-    
+    global msgRotMatrix
 #    cv.imshow("raw image", cv_image)
     #imgDim=(width,heigth)=(data.height, data.width)
     cv_image=bridge.imgmsg_to_cv2(raw_img, desired_encoding='passthrough')
@@ -75,6 +81,7 @@ def callbackRaw(raw_img):
             detAruImg,aruDistnc,Pmatr,rVecs=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
                                           cameraMatr,cameraDistCoefs,cameraFocLen,superimpAru='distance')
             rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
+            msgRotMatrix=rotMatr
 #            print("rotMatr: ",rotMatr)
             print("tVect: ",tVect)
 #            print('marker',mId, "has distance:",aruDistnc)
@@ -102,6 +109,8 @@ def callback_service(req):
             x=0.001*msgVector[2] +(0.08 if toggleWristLengthRecovery else 0),#[m]
             y=0.001*msgVector[0],   
             z=0.001*msgVector[1]
+#vector??
+vector=[msgRotMatrix[0,0],msgRotMatrix[0,1],msgRotMatrix[0,2],msgRotMatrix[1,0],msgRotMatrix[1,1],msgRotMatrix[1,2],msgRotMatrix[2,0],msgRotMatrix[2,1],msgRotMatrix[2,2]]
             )
     
 #------------------------------------------------
