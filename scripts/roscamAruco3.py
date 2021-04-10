@@ -105,14 +105,13 @@ def callback_service(req):
     global msgVector
 #    if aruco_success: print("ARUCO SUCCESS:TRUE")
     return aruco_serviceResponse(
-            success=aruco_success,
-            x=0.001*msgVector[2] +(0.08 if toggleWristLengthRecovery else 0),#[m]
-            y=0.001*msgVector[0],   
-            z=0.001*msgVector[1]
-#vector??
-vector=[msgRotMatrix[0,0],msgRotMatrix[0,1],msgRotMatrix[0,2],msgRotMatrix[1,0],msgRotMatrix[1,1],msgRotMatrix[1,2],msgRotMatrix[2,0],msgRotMatrix[2,1],msgRotMatrix[2,2]]
-            )
-    
+        success=aruco_success,
+        x=0.001*msgVector[2] +(0.08 if toggleWristLengthRecovery else 0),#[m]
+        y=0.001*msgVector[0],   
+        z=0.001*msgVector[1],
+        vector=[msgRotMatrix[0,0],msgRotMatrix[0,1],msgRotMatrix[0,2],msgRotMatrix[1,0],msgRotMatrix[1,1],msgRotMatrix[1,2],msgRotMatrix[2,0],msgRotMatrix[2,1],msgRotMatrix[2,2]]
+#        vector=[np.ravel(msgRotMatrix)]
+        )
 #------------------------------------------------
 #NOTE:
 #   tVect       tool0/maniulator e.e reference frame
