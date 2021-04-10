@@ -13,7 +13,7 @@ import cv2 as cv
 import cv2.aruco as aruco
 #from cv2 import aruco as aruco
 from cv_bridge import CvBridge
-from roscamLibrary3 import singleAruRelPos
+from roscamLibrary3 import singleAruRelPos as singleAruRelPos
 
 #PUBLISHER DI ARRAY:
 #aruco_position_pub = rospy.Publisher('/almax/aruco_target',Float64MultiArray,queue_size=20)
