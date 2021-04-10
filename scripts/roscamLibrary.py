@@ -16,16 +16,6 @@ import numpy as np
 
 #################### COSMETHIC FUNCTIONS ############################
 
-
-
-
-########### GEOMETRIC FUNCTIONS ####################
-
-    
-    
-##############################################################################
-        
-
 def IdOverAruco(ids, corners, grayQueryImg):
     font = cv.FONT_HERSHEY_SIMPLEX
 
@@ -129,26 +119,7 @@ def distOverAruco(distanceMarker, corners, queryImg):
 #            in_cnt.append(cnt_father) # check next aruco
 #        
 #    return in_cnt
-
-
-#def computeDistance(imgShape,corners,marker_real_world_mm, debug=0):
-#    # ====== Camera parameters ==========
-#    # Sensor is 5.64mm wide
-#    # Original resolution is 4032x1960
-#    focal_lenght = 3558.572811
-#    # ====== End camera parameters ======
-#
-#    # Size of the square marker
-##     marker_real_world_mm = 46
-#
-##     imgShape = queryImg.shape
-#    
-#    marker_dim_px = np.sqrt((corners[0][0][0][0] - corners[0][0][3][0])**2 + (corners[0][0][0][1] - corners[0][0][3][1])**2)
-#        
-#    distance_mm = marker_real_world_mm * (np.max(imgShape) / 4032) * focal_lenght / marker_dim_px
-#    if debug: print("Distance: {}cm".format(round(distance_mm / 10, 1)))
-#    return distance_mm
-
+    
 
 #def draw_axis_on_marker(queryImg,corners, ids):
 #    
@@ -178,6 +149,49 @@ def distOverAruco(distanceMarker, corners, queryImg):
 #     print(euler_angles_degrees)
 #
 #    return drawnImg
+    
+   
+def drawSingleAru(queryImg, corners, imgpts):
+    corner = tuple(corners.ravel())
+    queryImg = cv.line(queryImg, corner, tuple(imgpts[0].ravel()), (255,0,0), 3)
+    queryImg = cv.line(queryImg, corner, tuple(imgpts[1].ravel()), (0,255,0), 3)
+    queryImg = cv.line(queryImg, corner, tuple(imgpts[2].ravel()), (0,0,255), 3)
+    return queryImg
+
+
+
+
+# def cut_markers_area(queryImg,corners,rotation_matrix):
+    
+#         rotatedImg = cv2.warpAffine(queryImg, rotation_matrix, _img_rot.shape[1::-1], flags=cv2.INTER_LINEAR)
+#         _extrema = cv2.perspectiveTransform(np.array([maxx,maxy,minx,miny]), _rot_mat)
+                
+#         img_mrk.append(_img_rot[_extrema[0][1]:_extrema[1][1], _extrema[0][0]:_extrema[1][0], :])
+        
+#         i+=1
+#     return img_mrk
+    
+
+########### GEOMETRIC FUNCTIONS ####################
+
+#def computeDistance(imgShape,corners,marker_real_world_mm, debug=0):
+#    # ====== Camera parameters ==========
+#    # Sensor is 5.64mm wide
+#    # Original resolution is 4032x1960
+#    focal_lenght = 3558.572811
+#    # ====== End camera parameters ======
+#
+#    # Size of the square marker
+##     marker_real_world_mm = 46
+#
+##     imgShape = queryImg.shape
+#    
+#    marker_dim_px = np.sqrt((corners[0][0][0][0] - corners[0][0][3][0])**2 + (corners[0][0][0][1] - corners[0][0][3][1])**2)
+#        
+#    distance_mm = marker_real_world_mm * (np.max(imgShape) / 4032) * focal_lenght / marker_dim_px
+#    if debug: print("Distance: {}cm".format(round(distance_mm / 10, 1)))
+#    return distance_mm
+    
 
 def computeDistanceSingle(imgShape,corners,marker_real_world_mm, debug=0):
     # ====== Camera parameters ==========
@@ -197,27 +211,7 @@ def computeDistanceSingle(imgShape,corners,marker_real_world_mm, debug=0):
     distance_mm = marker_real_world_mm * (np.max(imgShape) / 640) * focal_lenght / marker_dim_px
     if debug: print("Distance: {}cm".format(round(distance_mm / 10, 1)))
     return distance_mm
-
-def drawSingleAru(queryImg, corners, imgpts):
-    corner = tuple(corners.ravel())
-    queryImg = cv.line(queryImg, corner, tuple(imgpts[0].ravel()), (255,0,0), 3)
-    queryImg = cv.line(queryImg, corner, tuple(imgpts[1].ravel()), (0,255,0), 3)
-    queryImg = cv.line(queryImg, corner, tuple(imgpts[2].ravel()), (0,0,255), 3)
-    return queryImg
     
-
-
-
-# def cut_markers_area(queryImg,corners,rotation_matrix):
-    
-#         rotatedImg = cv2.warpAffine(queryImg, rotation_matrix, _img_rot.shape[1::-1], flags=cv2.INTER_LINEAR)
-#         _extrema = cv2.perspectiveTransform(np.array([maxx,maxy,minx,miny]), _rot_mat)
-                
-#         img_mrk.append(_img_rot[_extrema[0][1]:_extrema[1][1], _extrema[0][0]:_extrema[1][0], :])
-        
-#         i+=1
-#     return img_mrk
-
 
 def singleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix, camera_dist_coefs,
                     focal_length,superimpAru='none'):
@@ -247,9 +241,7 @@ def singleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix, camera_dist
     queryImg = drawSingleAru(queryImg, corners[0][0], imgpts)#this solution works better than the following
 #     queryImg = aruco.drawAxis(queryImg, camera_matrix, camera_dist_coefs, rvecs, tvecs, 2)
   
-
-
-    centerx,centery=center=np.abs(corners[0][0] + corners[0][2])/2
+    centerx,centery=np.abs(corners[0][0] + corners[0][2])/2
     #
 #    (mrkSiz_cm/2,mrkSiz_cm/2)
 #    _, rvecsCent, tvecsCent = cv.solvePnP([[[mrkSiz_cm/2, mrkSiz_cm/2]]], [[[centerx, centery]]], camera_matrix, camera_dist_coefs)
@@ -258,42 +250,41 @@ def singleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix, camera_dist
 #    euler_angles_radians = euler_angles_degrees * np.pi / 180
     
     queryImg=cv.circle(queryImg, (int(centerx),int(centery)),5,(255,255,0),-1)    
-    return queryImg,distnc_mm,P,rvecs
+    return queryImg,distnc_mm,P
 
 
-def nsingleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix, camera_dist_coefs,
-                    focal_length,superimpAru='none'):
-   
-    
-    rvecs,tvecs,_= aruco.estimatePoseSingleMarkers(corners,markerSize_mm,camera_matrix,camera_dist_coefs)
-#     r & tvects are different from the ones with previous code
-    distnc_mm=np.sqrt((tvecs[0])**2+(tvecs[1])**2+(tvecs[2])**2)
-    
-    rotation_matrix = cv.Rodrigues(rvecs)[0]# From rvecs compute the rotation matrix
-    P = np.hstack((rotation_matrix, 10*tvecs))# Get the Projection matrix
-    
-    # Project axes points according to camera matrix and distortion coeff
-    axis = np.float32([[3,0,0], [0,3,0], [0,0,3]]).reshape(-1,3)# Array for drawing the 3 cartesian axes
-    imgpts, jac = cv.projectPoints(axis, rvecs, tvecs, camera_matrix, camera_dist_coefs)
-    
-#     cv.drawContours(queryImg, [corners], 0, (0,255,0), 3)#gotta work on this
-    if superimpAru=='distance': queryImg=distOverAruco(round(distnc_mm, 1),corners,queryImg)
-    elif superimpAru=='marker': queryImg=IdOverAruco(Id,corners,queryImg)
-        
-#    queryImg = drawSingleAru(queryImg, corners[0][0], imgpts)#this solution works better than the following
-    aruco.drawAxis(queryImg, camera_matrix, camera_dist_coefs, rvecs, tvecs, 2)
-     
-    
-#    for ii in(range(length(rvecs)))
-#       aruco.drawAxis(queryImg, camera_matrix, camera_dist_coefs, rvecs[ii-1], tvecs[ii-1], 0.1);
 
-#    centerx,centery=center=np.abs(corners[0][0] + corners[0][2])/2
-    #
-#    (mrkSiz_cm/2,mrkSiz_cm/2)
-#    _, rvecsCent, tvecsCent = cv.solvePnP([[[mrkSiz_cm/2, mrkSiz_cm/2]]], [[[centerx, centery]]], camera_matrix, camera_dist_coefs)
-#    print('center t vecs',tvecsCent)
+def nsingleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix,camera_dist_coefs, 
+                     superimpAru='none',tglDrawMark=0,tglDrawCenter=0):
+#    positiion estimation
+    rvecs,tvecs= aruco.estimatePoseSingleMarkers(corners,markerSize_mm,camera_matrix,camera_dist_coefs)
+    (rvecs - tvecs).any()  # get rid of that nasty numpy value array error
+    
+#    distance [mm]
+    distnc_mm=np.sqrt((tvecs**2).sum())
+#    rotation and projection matrix
+    rotation_matrix = cv.Rodrigues(rvecs)[0]
+    P = np.hstack((rotation_matrix, np.reshape(tvecs,[3,1])))
 #    euler_angles_degrees = - cv.decomposeProjectionMatrix(P)[6]
 #    euler_angles_radians = euler_angles_degrees * np.pi / 180
     
-#    queryImg=cv.circle(queryImg, (int(centerx),int(centery)),5,(255,255,0),-1)    
-    return queryImg,distnc_mm,P,rvecs
+#    substitute marker with distance of Id
+    if superimpAru=='distance': queryImg=distOverAruco(round(distnc_mm, 1),corners,queryImg)
+    elif superimpAru=='marker': queryImg=IdOverAruco(Id,corners,queryImg)
+#    draws axis half of the size of the marker
+    if tglDrawMark:
+        markerDim_px = np.sqrt((corners[0][0][0] - corners[0][3][0])**2 + (corners[0][0][1] - corners[0][3][1])**2)    
+        aruco.drawAxis(queryImg, camera_matrix, camera_dist_coefs, rvecs, tvecs, int(markerDim_px//4))
+
+    if tglDrawCenter:
+        centerx,centery=np.abs(corners[0][0] + corners[0][2])/2
+        markerDim_px = np.sqrt((corners[0][0][0] - corners[0][3][0])**2 + (corners[0][0][1] - corners[0][3][1])**2)
+        queryImg=cv.circle(queryImg, (int(centerx),int(centery)),int(markerDim_px/16),(255,255,0),-1)
+        
+    return queryImg,distnc_mm,P
+
+
+##################################
+#   bibliography
+#    https://docs.opencv.org/4.2.0/d5/dae/tutorial_aruco_detection.html
+#    for the parameters list

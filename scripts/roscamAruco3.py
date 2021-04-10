@@ -6,6 +6,7 @@ import numpy as np
 #from std_msgs.msg import String
 from sensor_msgs.msg import Image as sensImg
 from sensor_msgs.msg import CompressedImage as CsensImg
+from sensor_msgs.msg import CameraInfo
 #frofm sensor_msgs.msg import PointCloud2 as sensPCld
 from ur3_control.srv import aruco_service,aruco_serviceResponse
 
@@ -13,7 +14,7 @@ import cv2 as cv
 import cv2.aruco as aruco
 #from cv2 import aruco as aruco
 from cv_bridge import CvBridge
-from roscamLibrary3 import singleAruRelPos as singleAruRelPos
+from roscamLibrary3 import nsingleAruRelPos as singleAruRelPos
 
 #PUBLISHER DI ARRAY:
 #aruco_position_pub = rospy.Publisher('/almax/aruco_target',Float64MultiArray,queue_size=20)
@@ -23,22 +24,33 @@ from roscamLibrary3 import singleAruRelPos as singleAruRelPos
 #------------------------------------------------
 
 ARUCO_PARAMETERS = aruco.DetectorParameters_create()
-ARUCO_DICT = aruco.Dictionary_get(aruco.DICT_ARUCO_ORIGINAL)
 
-cameraMatr = np.matrix([[462.1379497504639, 0.0, 320.5],\
-                        [0.0, 462.1379497504639, 240.5],\
-                        [0.0000e+00, 0.0000e+00, 1.0000e+00]])
-cameraDistCoefs = np.array([1e-08, 1e-08, 1e-08, 1e-08, 1e-08])
+aruLibrary={'original':aruco.DICT_ARUCO_ORIGINAL
+            ,'51000':aruco.DICT_5X5_1000
+            ,'61000':aruco.DICT_6X6_1000
+            ,'71000':aruco.DICT_7X7_1000
+            }
+ARUCO_DICT = aruco.Dictionary_get(aruLibrary['original'])
 
-cameraFocLen= 462.137
-
-#targetImg=cv.imread('test-imgs/moriginal/m582orig.jpg')
-#_,targetId,_=aruco.detectMarkers(targetImg,ARUCO_DICT,parameters=ARUCO_PARAMETERS)#targetId=582
-
-aruco_success=False
-msgVector=[0,0,0]#np.zeros([numRows,numCols])
-msgRotMatrix=[[0,0,0],[0,0,0],[0,0,0]]#should this be a matrix?
-
+def loadArucoDict(requestedDict):#TODO
+    global ARUCO_DICT
+    ARUCO_DICT = aruco.Dictionary_get(aruLibrary[requestedDict])
+    
+#----------------------------------------------
+    
+def loadCameraParam(myCam):
+    global cameraMatr
+    global cameraDistCoefs
+    global cameraFocLen
+    
+    print('loading camera parameters...')
+    cameraInfoMsg=rospy.wait_for_message(myCam+'/color/camera_info',CameraInfo)
+    cameraMatr=np.reshape(cameraInfoMsg.K,[3,3])
+    cameraDistCoefs=cameraInfoMsg.D
+    cameraFocLen=np.mean([np.ravel(cameraMatr[0])[0],np.ravel(cameraMatr[1])[1]])
+    
+#------------------------------------------------------------
+    
 aruTargetDict={'cube5s':(582,
                         40),
 #                'cube5d':(582,
@@ -58,19 +70,27 @@ aruTargetDict={'cube5s':(582,
                 }
            
 (targetMarkId,targetMarkSize)=targetMarker=aruTargetDict['cube5s']
-#may introduce external request for this
 
+#def loadTargetRequest():
+#    selectedTarget=read_somewhere(targetRequestTopic)
+#    (targetMarkId,targetMarkSize)=targetMarker=aruTargetDict[selectedTarget]
+
+#----------------------------------------
 bridge=CvBridge()
  
 def callbackRaw(raw_img):
     global aruco_success
     global msgVector
     global msgRotMatrix
-#    cv.imshow("raw image", cv_image)
-    #imgDim=(width,heigth)=(data.height, data.width)
+    
+#    cv.imshow("raw image", cv_image)    
     cv_image=bridge.imgmsg_to_cv2(raw_img, desired_encoding='passthrough')
-
-    detCorners, detIds, _ = aruco.detectMarkers(cv_image, ARUCO_DICT, parameters=ARUCO_PARAMETERS)
+    cv_gray=cv.cvtColor(cv_image,cv.COLOR_RGB2GRAY)
+    
+    selectedDictionary='original'
+    loadArucoDict(selectedDictionary)
+    
+    detCorners, detIds, _ = aruco.detectMarkers(cv_gray, ARUCO_DICT, parameters=ARUCO_PARAMETERS)
         
     if detIds is not None and len(detIds) >= 1: # Check if at least one marker has been found
         
@@ -78,15 +98,15 @@ def callbackRaw(raw_img):
             
         for mId, aruPoints in zip(detIds, detCorners):
                 
-            detAruImg,aruDistnc,Pmatr,rVecs=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
-                                          cameraMatr,cameraDistCoefs,cameraFocLen,superimpAru='distance')
+            detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
+                                          cameraMatr,cameraDistCoefs,superimpAru='distance',
+                                          tglDrawCenter=0,tglDrawMark=1)
             rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
-            msgRotMatrix=rotMatr
-#            print("rotMatr: ",rotMatr)
-            print("tVect: ",tVect)
-#            print('marker',mId, "has distance:",aruDistnc)
+            
+#            comparison between currently found marker and target
             if mId==targetMarkId:
                 aruco_success=True
+                msgRotMatrix=rotMatr
                 msgVector=tVect
             else:
                 aruco_success=False
@@ -95,35 +115,19 @@ def callbackRaw(raw_img):
         aruco_success=False
         detAruImg=cv_image.copy()#
 
-    cv.imshow('video feed',detAruImg)
-    cv.waitKey(15)
+    cv.imshow('detected markers',detAruImg)
     
-toggleWristLengthRecovery=0
-
-def callback_service(req):
-    global aruco_success
-    global msgVector
-#    if aruco_success: print("ARUCO SUCCESS:TRUE")
-    return aruco_serviceResponse(
-        success=aruco_success,
-        x=0.001*msgVector[2] +(0.08 if toggleWristLengthRecovery else 0),#[m]
-        y=0.001*msgVector[0],   
-        z=0.001*msgVector[1],
-        vector=[msgRotMatrix[0,0],msgRotMatrix[0,1],msgRotMatrix[0,2],msgRotMatrix[1,0],msgRotMatrix[1,1],msgRotMatrix[1,2],msgRotMatrix[2,0],msgRotMatrix[2,1],msgRotMatrix[2,2]]
-#        vector=[np.ravel(msgRotMatrix)]
-        )
-#------------------------------------------------
-#NOTE:
-#   tVect       tool0/maniulator e.e reference frame
-#    X              Z
-#    Y              x
-#    Z              Y
-#rotation matrix: tVect=R*tool0_vects
-#
-#        	R= 0 0 1
-#                  1 0 0
-#                  0 1 0
-    
+    key = cv.waitKey(12) & 0xFF# key still unused
+#    if key == 27:# 27:esc, ord('q'):q
+#       exit_somehow()
+        
+def callbackRawDep(rade_img):
+    #    cv.imshow("raw image", cv_image)    
+    cv_image=bridge.imgmsg_to_cv2(rade_img, desired_encoding='passthrough')
+    cv.imshow('depth image',cv_image)
+    key = cv.waitKey(12) & 0xFF
+    if key == 27:# 27:esc, ord('q'):q
+        cv.destroyWindow('depth image')
     
 def callbackCompr(cmpr_img):#(1)
     imgarr = np.fromstring(cmpr_img.data, np.uint8)
@@ -147,17 +151,60 @@ def callbackCompr(cmpr_img):#(1)
 #    cv.imshow("point cloud image", cv_image)
 #    cv.waitKey(15)
     
+#-----------------------------------------------------------------
+
+aruco_success=False
+msgVector=[0,0,0]#np.zeros([numRows,numCols])
+msgRotMatrix=[[0,0,0],[0,0,0],[0,0,0]]
+
+        
+tglWristLengthRecovery=1
+# recovered percentage
+recovLenRatio=1
+
+def callback_service(req):
+    global aruco_success
+    global msgVector
+    global msgRotMatrix
+#    if aruco_success: print("ARUCO SUCCESS:TRUE")
+    
+    return aruco_serviceResponse(
+        success=aruco_success,
+        x=0.001*msgVector[2] +(recovLenRatio*0.08 if tglWristLengthRecovery else 0),#[m]
+        y=0.001*msgVector[0],   
+        z=0.001*msgVector[1],
+        vector=np.ravel(msgRotMatrix)#flattened array
+        )
+
+
+#NOTE:
+#   tVect       tool0/maniulator e.e reference frame
+#    X              Z
+#    Y              x
+#    Z              Y
+#rotation matrix: tVect=R*tool0_vects
+#
+#        	R= 0 0 1
+#           1 0 0
+#           0 1 0
+#------------------------------------------------------
+
+    
 def listener(myCam,myTop,myType,myCallk):    
     rospy.init_node('camera_listener', anonymous=True)
+    loadCameraParam(myCam)
+    print('ready')
     rospy.Subscriber(myCam+myTop,myType,myCallk,queue_size = 1)
     rospy.Service('aruco_service', aruco_service, callback_service)
     try:
         rospy.spin()
-    except KeyboardInterrupt:#what about adding waitKey() here?
+    except KeyboardInterrupt:#
         print('Closing')
     cv.destroyAllWindows()
     
-
+#---------------------------------------------------------------
+    
+    
 camDict={'moving':"/camera_image",
             'fixed':"/camera_image_fix"}
 
@@ -172,7 +219,7 @@ topicDict={'raw compressed':("/color/image_raw/compressed",
 #                               callbackPCld),
             'raw depth': ("/depth/image_rect_raw",
                     sensImg,
-                    callbackRaw),
+                    callbackRawDep),
             'raw':("/color/image_raw",
                     sensImg,
                     callbackRaw)    
@@ -181,6 +228,7 @@ topicDict={'raw compressed':("/color/image_raw/compressed",
 if __name__ == '__main__':
     myCamera=camDict['moving']
     myTopicFull=topicDict['raw']
+    
     print('connecting to:'+myCamera+myTopicFull[0]+'...')
     listener(myCamera,myTopicFull[0],myTopicFull[1],myTopicFull[2])
 
