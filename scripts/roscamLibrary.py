@@ -42,7 +42,7 @@ def distOverAruco(distanceMarker, corners, queryImg):
     textsizeX, textsizeY = cv.getTextSize(str(distanceMarker), font, 1, 3)[0]    
     textX = (textX - textsizeX / 2).astype(int)
     textY = (textY + textsizeY / 2).astype(int)    
-    cv.putText(queryImg, str(distanceMarker), (textX, textY), font, 1, (0, 0, 0), 2)
+    cv.putText(queryImg, str(distanceMarker), (textX, textY), font, 1, (255, 0,255), 2)
     return queryImg
 
 

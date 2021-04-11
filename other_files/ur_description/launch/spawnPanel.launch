@@ -1,0 +1,6 @@
+<?xml version="1.6"?>
+<launch>
+  
+  <node pkg="gazebo_ros" type="spawn_model" name="spawnPannello" args="-sdf -model pannello -x 1 -y 1 -z 0 -Y 0 -file /home/uga/ros/erc2021/workspace/src/ERC_2021_simulator/ur_description/urdf/panel.sdf">
+  </node>
+</launch>

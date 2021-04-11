@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!--launch simulation-->
+  <include file="$(find simulation)/launch/simulator.launch"/>
+
+ 
+<!-- start cv routine-->
+  <node name="roscamAruco1" pkg="simulation-cv" type="roscamAruco.py" launch-prefix="xterm -e" output="screen" respawn="true" respawn_delay="3"/>
+
+  <!-- start high level control routine-->
+  <node name="controlLord" pkg="ur3_control" type="ERC" output="screen" launch-prefix="xterm -e" respawn="true" respawn_delay="3" />
+
+</launch>
