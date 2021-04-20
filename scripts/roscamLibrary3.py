@@ -257,7 +257,7 @@ def singleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix, camera_dist
 def nsingleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix,camera_dist_coefs, 
                      superimpAru='none',tglDrawMark=0,tglDrawCenter=0):
 #    positiion estimation
-    rvecs,tvecs= aruco.estimatePoseSingleMarkers(corners,markerSize_mm,camera_matrix,camera_dist_coefs)
+    rvecs,tvecs,object_points= aruco.estimatePoseSingleMarkers(corners,markerSize_mm,camera_matrix,camera_dist_coefs)
     (rvecs - tvecs).any()  # get rid of that nasty numpy value array error
     
 #    distance [mm]

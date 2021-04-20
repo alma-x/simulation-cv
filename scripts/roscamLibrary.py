@@ -270,7 +270,7 @@ def nsingleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix,camera_dist
     
 #    substitute marker with distance of Id
     if superimpAru=='distance': queryImg=distOverAruco(round(distnc_mm, 1),corners,queryImg)
-    elif superimpAru=='marker': queryImg=IdOverAruco(Id,corners,queryImg)
+    elif superimpAru=='id': queryImg=IdOverAruco(Id,corners,queryImg)
 #    draws axis half of the size of the marker
     if tglDrawMark:
         markerDim_px = np.sqrt((corners[0][0][0] - corners[0][3][0])**2 + (corners[0][0][1] - corners[0][3][1])**2)    

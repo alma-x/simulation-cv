@@ -3,12 +3,13 @@
 import rospy
 import numpy as np
 
-#from std_msgs.msg import String
 from sensor_msgs.msg import Image as sensImg
-from sensor_msgs.msg import CompressedImage as CsensImg
 from sensor_msgs.msg import CameraInfo
 #frofm sensor_msgs.msg import PointCloud2 as sensPCld
+
 from ur3_control.srv import aruco_service,aruco_serviceResponse
+from ur3_control.srv import cv_server,cv_serverResponse, cv_serverRequest
+from ur3_control.msg import cv_to_bridge as bridge_msg
 
 import cv2 as cv
 import cv2.aruco as aruco
@@ -23,6 +24,8 @@ from roscamLibrary3 import nsingleAruRelPos as singleAruRelPos
 #aruco_position_pub.publish(robaccia)
 #------------------------------------------------
 
+pub = rospy.Publisher('aruco_bridge_opencv', bridge_msg, queue_size=1)
+
 ARUCO_PARAMETERS = aruco.DetectorParameters_create()
 
 aruLibrary={'original':aruco.DICT_ARUCO_ORIGINAL
@@ -30,12 +33,15 @@ aruLibrary={'original':aruco.DICT_ARUCO_ORIGINAL
             ,'61000':aruco.DICT_6X6_1000
             ,'71000':aruco.DICT_7X7_1000
             }
-ARUCO_DICT = aruco.Dictionary_get(aruLibrary['original'])
+#ARUCO_DICT = aruco.Dictionary_get(aruLibrary['original'])
 
 def loadArucoDict(requestedDict):#TODO
     global ARUCO_DICT
     ARUCO_DICT = aruco.Dictionary_get(aruLibrary[requestedDict])
-    
+
+selectedDictionary='original'
+loadArucoDict(selectedDictionary)   
+ 
 #----------------------------------------------
     
 def loadCameraParam(myCam):
@@ -51,29 +57,53 @@ def loadCameraParam(myCam):
     
 #------------------------------------------------------------
     
-aruTargetDict={'cube5s':(582,
-                        40),
-#                'cube5d':(582,
-#                        40),
-#                'cube10d':(582,
-#                        90),
-#                'centrifugaBase':(273,
-#                        100),
-#                  'centrifugaAxial':(429,
-#                        100),
-#                'centrifugaTangential':(221,
-#                        100)
-#                'panelSwitch':(,
-#                        )
-#                'newWord':(wordArucoId,
-#                        wordMarketSize)
-                }
-           
-(targetMarkId,targetMarkSize)=targetMarker=aruTargetDict['cube5s']
+#aruTargetDict={'panelSwitch1':(101,
+#                        40)
+#                ,'panelSwitch2':(102,
+#                        40)
+#                ,'panelSwitch3':(103,
+#                        40)
+#                ,'panelSwitch4':(104,
+#                        40)
+#                ,'panelSwitch5':(105,
+#                        40)
+#                ,'panelSwitch6':(106,
+#                        40)
+#                ,'panelSwitch7':(107,
+#                        40)
+#                ,'panelSwitch8':(108,
+#                        40)
+#                }
 
-#def loadTargetRequest():
+
+aruco_success=False
+#targetList=['panelSwitch8','panelSwitch7','panelSwitch6','panelSwitch5','panelSwitch4'
+#            ,'panelSwitch3','panelSwitch2','panelSwitch1']
+#targetList=[[101,40],[102,40],[103,40],[104,40],
+#            [105,40],[106,40],[107,40],[108,40]]
+targetList=[[102,40],[104,40],[106,40],[108,40]]
+#global targetCounter
+targetCounter=0
+remaining_targets=0
+targetListLen=len(targetList)
+
+#global findNewTarget
+#findNewTarget=1
+
+#def receiveTargetRequest():
 #    selectedTarget=read_somewhere(targetRequestTopic)
-#    (targetMarkId,targetMarkSize)=targetMarker=aruTargetDict[selectedTarget]
+#    (targetMarkId,targetMarkSize)=loadTargetData(selectedTarget)
+
+#def loadTargetData(requestString):
+#    return aruTargetDict[requestString]
+
+global targetMarkId,targetMarkSize
+#(targetMarkId,targetMarkSize)=targetMarker=aruTargetDict['panelSwitch3']
+#global selectionString
+#selectionString=targetList[4]
+#(targetMarkId,targetMarkSize)=aruTargetDict[selectionString]
+# apparently aruTargetDict[targetList[4]] it's different, even if prints ==
+
 
 #----------------------------------------
 bridge=CvBridge()
@@ -82,94 +112,79 @@ def callbackRaw(raw_img):
     global aruco_success
     global msgVector
     global msgRotMatrix
+    global targetCounter
+    global findNewTarget
+    global remaining_targets
     
-#    cv.imshow("raw image", cv_image)    
+    
     cv_image=bridge.imgmsg_to_cv2(raw_img, desired_encoding='passthrough')
     cv_gray=cv.cvtColor(cv_image,cv.COLOR_RGB2GRAY)
     
-    selectedDictionary='original'
-    loadArucoDict(selectedDictionary)
     
+    (targetMarkId,targetMarkSize)=tuple(targetList[targetCounter])
     detCorners, detIds, _ = aruco.detectMarkers(cv_gray, ARUCO_DICT, parameters=ARUCO_PARAMETERS)
         
     if detIds is not None and len(detIds) >= 1: # Check if at least one marker has been found
         
         detAruImg = aruco.drawDetectedMarkers(cv_image.copy(), detCorners, borderColor=(0, 255, 0))
-            
+           
+        aruco_success=False 
         for mId, aruPoints in zip(detIds, detCorners):
+            if mId==targetList[targetCounter][0]:    
+                detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
+                                              cameraMatr,cameraDistCoefs,tglDrawMark=1)
                 
-            detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
-                                          cameraMatr,cameraDistCoefs,
-                                          tglDrawCenter=0,tglDrawMark=1)
-            rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
-            
-#            comparison between currently found marker and target
-            if mId==targetMarkId:
-                aruco_success=True
+                rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
                 msgRotMatrix=rotMatr
                 msgVector=tVect
-            else:
-                aruco_success=False
+                
+                aruco_success=True
+                remaining_targets=targetListLen-targetCounter-1
+                
     else:
-#        print("no marker detected")
         aruco_success=False
         detAruImg=cv_image.copy()#
-
+    #    newSize,_=int(np.shape(detAruImg))
+    #    detAruImg=cv.resize(detAruImg,newSize)
     cv.imshow('detected markers',detAruImg)
-    
+
+    msg=bridge_msg()
+    msg.success=aruco_success
+    if msg.success:
+        msg.x=0.001*msgVector[2] +(recovLenRatio*0.08 if tglWristLengthRecovery else 0)
+        msg.y=0.001*msgVector[0]
+        msg.z=0.001*msgVector[1]
+    pub.publish(msg)
     key = cv.waitKey(12) & 0xFF# key still unused
 #    if key == 27:# 27:esc, ord('q'):q
 #       exit_somehow()
         
-def callbackRawDep(rade_img):
-    #    cv.imshow("raw image", cv_image)    
-    cv_image=bridge.imgmsg_to_cv2(rade_img, desired_encoding='passthrough')
-    cv.imshow('depth image',cv_image)
-    key = cv.waitKey(12) & 0xFF
-    if key == 27:# 27:esc, ord('q'):q
-        cv.destroyWindow('depth image')
-    
-def callbackCompr(cmpr_img):#(1)
-    imgarr = np.fromstring(cmpr_img.data, np.uint8)
-    # could possibly try also direct array recast, but already working
-    cv_image=cv.imdecode(imgarr,cv.IMREAD_UNCHANGED)
-    print('compressed dimension')
-    print(cv_image.shape)
-    cv.imshow("compressed image", cv_image)
-    cv.waitKey(15)
-
-#def callbackComprDep(cmpr_img):TODO#(1)
-#    imgarr = np.fromstring(cmpr_img.data, np.uint8)
-#    cv_image=cv.imdecode(imgarr,cv.IMREAD_UNCHANGED)
-#    cv.imshow("image", cv_image)
-#    cv.waitKey(15)
-    
-#def callbackPCld(pcld_img):#(3)
-##    no pcl_ros method in python, which worked smootlhy
-##    alternative is python_pcl
-##    cv_image=
-#    cv.imshow("point cloud image", cv_image)
-#    cv.waitKey(15)
     
 #-----------------------------------------------------------------
 
-aruco_success=False
 msgVector=[0,0,0]#np.zeros([1,3])
 msgRotMatrix=[[0,0,0,],[0,0,0],[0,0,0]]#np.zeros([3,3])
 
         
 tglWristLengthRecovery=1
 # recovered percentage
-recovLenRatio=0.5
+recovLenRatio=1
 
 def callback_service(req):
     global aruco_success
     global msgVector
     global msgRotMatrix
-#    if aruco_success: print("ARUCO SUCCESS:TRUE")
-    
-    return aruco_serviceResponse(
+    global targetCounter
+    global findNewTarget
+    global remaining_targets
+    print('Service received')
+    if req.next_aruco:
+        if targetCounter<targetListLen-1:
+            targetCounter=targetCounter+1
+            
+    return cv_serverResponse(
         success=aruco_success,
+        moreTargets=remaining_targets,
         x=0.001*msgVector[2] +(recovLenRatio*0.08 if tglWristLengthRecovery else 0),#[m]
         y=0.001*msgVector[0],   
         z=0.001*msgVector[1],
@@ -195,7 +210,8 @@ def listener(myCam,myTop,myType,myCallk):
     loadCameraParam(myCam)
     print('ready')
     rospy.Subscriber(myCam+myTop,myType,myCallk,queue_size = 1)
-    rospy.Service('aruco_service', aruco_service, callback_service)
+    rospy.Publisher('aruco_bridge_opencv', bridge_msg, queue_size=10)
+    rospy.Service('cv_server', cv_server, callback_service)
     try:
         rospy.spin()
     except KeyboardInterrupt:#
@@ -208,25 +224,13 @@ def listener(myCam,myTop,myType,myCallk):
 camDict={'moving':"/camera_image",
             'fixed':"/camera_image_fix"}
 
-topicDict={'raw compressed':("/color/image_raw/compressed",
-                             CsensImg,
-                             callbackCompr),
-#                'raw depth':("/color/image_raw/compressedDepth",
-#                             CsensImg,
-#                             callbackComprDep),
-#                'point cloud':("/depth/color/points",
-#                               sensPCld,
-#                               callbackPCld),
-            'raw depth': ("/depth/image_rect_raw",
-                    sensImg,
-                    callbackRawDep),
-            'raw':("/color/image_raw",
+topicDict={'raw':("/color/image_raw",
                     sensImg,
                     callbackRaw)    
             }   
 
 if __name__ == '__main__':
-    myCamera=camDict['fixed']
+    myCamera=camDict['moving']
     myTopicFull=topicDict['raw']
     
     print('connecting to:'+myCamera+myTopicFull[0]+'...')
