@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import numpy as np
@@ -6,13 +6,16 @@ import numpy as np
 from sensor_msgs.msg import Image as sensImg
 from sensor_msgs.msg import CameraInfo
 #frofm sensor_msgs.msg import PointCloud2 as sensPCld
-from ur3_control.srv import aruco_service,aruco_serviceResponse#,aruco_serviceRequest
+
+from ur3_control.srv import aruco_service,aruco_serviceResponse
+from ur3_control.srv import cv_server,cv_serverResponse, cv_serverRequest
+from ur3_control.msg import cv_to_bridge as bridge_msg
 
 import cv2 as cv
 import cv2.aruco as aruco
 #from cv2 import aruco as aruco
 from cv_bridge import CvBridge
-from roscamLibrary import nsingleAruRelPos as singleAruRelPos
+from roscamLibrary3 import nsingleAruRelPos as singleAruRelPos
 
 #PUBLISHER DI ARRAY:
 #aruco_position_pub = rospy.Publisher('/almax/aruco_target',Float64MultiArray,queue_size=20)
@@ -20,6 +23,8 @@ from roscamLibrary import nsingleAruRelPos as singleAruRelPos
 #robaccia = Float64MultiArray(data=array)
 #aruco_position_pub.publish(robaccia)
 #------------------------------------------------
+
+pub = rospy.Publisher('aruco_bridge_opencv', bridge_msg, queue_size=1)
 
 ARUCO_PARAMETERS = aruco.DetectorParameters_create()
 
@@ -70,13 +75,13 @@ def loadCameraParam(myCam):
 #                        40)
 #                }
 
-global targetList
+
+aruco_success=False
 #targetList=['panelSwitch8','panelSwitch7','panelSwitch6','panelSwitch5','panelSwitch4'
 #            ,'panelSwitch3','panelSwitch2','panelSwitch1']
 #targetList=[[101,40],[102,40],[103,40],[104,40],
 #            [105,40],[106,40],[107,40],[108,40]]
-targetList=[[104,40]
-            ,[106,40]]
+targetList=[[102,40],[104,40],[106,40],[108,40]]
 #global targetCounter
 targetCounter=0
 remaining_targets=0
@@ -111,6 +116,7 @@ def callbackRaw(raw_img):
     global findNewTarget
     global remaining_targets
     
+    
     cv_image=bridge.imgmsg_to_cv2(raw_img, desired_encoding='passthrough')
     cv_gray=cv.cvtColor(cv_image,cv.COLOR_RGB2GRAY)
     
@@ -121,12 +127,13 @@ def callbackRaw(raw_img):
     if detIds is not None and len(detIds) >= 1: # Check if at least one marker has been found
         
         detAruImg = aruco.drawDetectedMarkers(cv_image.copy(), detCorners, borderColor=(0, 255, 0))
-            
+           
+        aruco_success=False 
         for mId, aruPoints in zip(detIds, detCorners):
-            if mId==targetMarkId:    
+            if mId==targetList[targetCounter][0]:    
                 detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
                                               cameraMatr,cameraDistCoefs,tglDrawMark=1)
-
+                
                 rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
                 msgRotMatrix=rotMatr
                 msgVector=tVect
@@ -134,19 +141,20 @@ def callbackRaw(raw_img):
                 aruco_success=True
                 remaining_targets=targetListLen-targetCounter-1
                 
-                if targetCounter<targetListLen-1:
-                    targetCounter+=1 
-
-            else:
-                aruco_success=False
     else:
         aruco_success=False
         detAruImg=cv_image.copy()#
-
     #    newSize,_=int(np.shape(detAruImg))
     #    detAruImg=cv.resize(detAruImg,newSize)
     cv.imshow('detected markers',detAruImg)
-    
+
+    msg=bridge_msg()
+    msg.success=aruco_success
+    if msg.success:
+        msg.x=0.001*msgVector[2] +(recovLenRatio*0.08 if tglWristLengthRecovery else 0)
+        msg.y=0.001*msgVector[0]
+        msg.z=0.001*msgVector[1]
+    pub.publish(msg)
     key = cv.waitKey(12) & 0xFF# key still unused
 #    if key == 27:# 27:esc, ord('q'):q
 #       exit_somehow()
@@ -154,7 +162,6 @@ def callbackRaw(raw_img):
     
 #-----------------------------------------------------------------
 
-aruco_success=False
 msgVector=[0,0,0]#np.zeros([1,3])
 msgRotMatrix=[[0,0,0,],[0,0,0],[0,0,0]]#np.zeros([3,3])
 
@@ -170,8 +177,12 @@ def callback_service(req):
     global targetCounter
     global findNewTarget
     global remaining_targets
+    print('Service received')
+    if req.next_aruco:
+        if targetCounter<targetListLen-1:
+            targetCounter=targetCounter+1
             
-    return aruco_serviceResponse(
+    return cv_serverResponse(
         success=aruco_success,
         moreTargets=remaining_targets,
         x=0.001*msgVector[2] +(recovLenRatio*0.08 if tglWristLengthRecovery else 0),#[m]
@@ -199,7 +210,8 @@ def listener(myCam,myTop,myType,myCallk):
     loadCameraParam(myCam)
     print('ready')
     rospy.Subscriber(myCam+myTop,myType,myCallk,queue_size = 1)
-    rospy.Service('aruco_service', aruco_service, callback_service)
+    rospy.Publisher('aruco_bridge_opencv', bridge_msg, queue_size=10)
+    rospy.Service('cv_server', cv_server, callback_service)
     try:
         rospy.spin()
     except KeyboardInterrupt:#

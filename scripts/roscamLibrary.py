@@ -16,23 +16,18 @@ import numpy as np
 
 #################### COSMETHIC FUNCTIONS ############################
 
-def IdOverAruco(ids, corners, grayQueryImg):
+def IdOverAruco(id, corners, QueryImg):
     font = cv.FONT_HERSHEY_SIMPLEX
 
-    arucoIDImg = np.copy(grayQueryImg)
-    # Check if some aruco has been found
-    if ids is not None and len(ids) >= 1:
-        for i, corner in zip(ids, corners):
-            #print("Corners:", corner)
-            cv.fillPoly(arucoIDImg, corner.astype(int), (230, 230, 230))
+    cv.fillPoly(QueryImg, corners.astype(int), (230, 230, 230))
 
-            (textX, textY )= np.abs(corner[0][0] + corner[0][2]) / 2
-            textsizeX, textsizeY = cv.getTextSize(str(i[0]), font, 1, 3)[0]
-            textX = (textX - textsizeX / 2).astype(int)
-            textY = (textY + textsizeY / 2).astype(int)
-            cv.putText(arucoIDImg, str(i[0]), (textX, textY), font, 1, (0, 0, 0), 2)
+    (textX, textY )= np.abs(corners[0][0] + corners[0][2]) / 2
+    textsizeX, textsizeY = cv.getTextSize(str(id[0]), font, 1, 3)[0]
+    textX = (textX - textsizeX / 2).astype(int)
+    textY = (textY + textsizeY / 2).astype(int)
+    cv.putText(QueryImg, str(id[0]), (textX, textY), font, 1, (0, 0, 0), 2)
 
-    return arucoIDImg
+    return QueryImg
 
 def distOverAruco(distanceMarker, corners, queryImg):
     font = cv.FONT_HERSHEY_SIMPLEX
@@ -213,7 +208,7 @@ def computeDistanceSingle(imgShape,corners,marker_real_world_mm, debug=0):
     return distance_mm
     
 
-def singleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix, camera_dist_coefs,
+def oldsingleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix, camera_dist_coefs,
                     focal_length,superimpAru='none'):
    
     imgShape = queryImg.shape
@@ -270,7 +265,7 @@ def nsingleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix,camera_dist
     
 #    substitute marker with distance of Id
     if superimpAru=='distance': queryImg=distOverAruco(round(distnc_mm, 1),corners,queryImg)
-    elif superimpAru=='marker': queryImg=IdOverAruco(Id,corners,queryImg)
+    elif superimpAru=='id': queryImg=IdOverAruco(Id,corners,queryImg)
 #    draws axis half of the size of the marker
     if tglDrawMark:
         markerDim_px = np.sqrt((corners[0][0][0] - corners[0][3][0])**2 + (corners[0][0][1] - corners[0][3][1])**2)    
@@ -282,7 +277,6 @@ def nsingleAruRelPos(queryImg,corners,Id,markerSize_mm,camera_matrix,camera_dist
         queryImg=cv.circle(queryImg, (int(centerx),int(centery)),int(markerDim_px/16),(255,255,0),-1)
         
     return queryImg,distnc_mm,P
-
 
 ##################################
 #   bibliography

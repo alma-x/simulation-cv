@@ -100,7 +100,7 @@ def callbackRaw(raw_img):
                 
             detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
                                           cameraMatr,cameraDistCoefs,superimpAru='distance',
-                                          tglDrawCenter=0,tglDrawMark=1)
+                                          tglDrawCenter=0,tglDrawMark=0)
             rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
             
 #            comparison between currently found marker and target
@@ -154,13 +154,13 @@ def callbackCompr(cmpr_img):#(1)
 #-----------------------------------------------------------------
 
 aruco_success=False
-msgVector=[0,0,0]#np.zeros([numRows,numCols])
-msgRotMatrix=[[0,0,0],[0,0,0],[0,0,0]]
+msgVector=[0,0,0]#np.zeros([1,3])
+msgRotMatrix=[[0,0,0,],[0,0,0],[0,0,0]]#np.zeros([3,3])
 
         
 tglWristLengthRecovery=1
 # recovered percentage
-recovLenRatio=1
+recovLenRatio=0.5
 
 def callback_service(req):
     global aruco_success
