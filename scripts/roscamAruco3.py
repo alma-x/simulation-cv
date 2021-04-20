@@ -99,7 +99,7 @@ def callbackRaw(raw_img):
         for mId, aruPoints in zip(detIds, detCorners):
                 
             detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
-                                          cameraMatr,cameraDistCoefs,superimpAru='distance',
+                                          cameraMatr,cameraDistCoefs,
                                           tglDrawCenter=0,tglDrawMark=1)
             rotMatr,tVect=Pmatr[0:3,0:3],Pmatr[0:3,3]
             
@@ -154,13 +154,13 @@ def callbackCompr(cmpr_img):#(1)
 #-----------------------------------------------------------------
 
 aruco_success=False
-msgVector=[0,0,0]#np.zeros([numRows,numCols])
-msgRotMatrix=[[0,0,0],[0,0,0],[0,0,0]]
+msgVector=[0,0,0]#np.zeros([1,3])
+msgRotMatrix=[[0,0,0,],[0,0,0],[0,0,0]]#np.zeros([3,3])
 
         
 tglWristLengthRecovery=1
 # recovered percentage
-recovLenRatio=1
+recovLenRatio=0.5
 
 def callback_service(req):
     global aruco_success
@@ -226,7 +226,7 @@ topicDict={'raw compressed':("/color/image_raw/compressed",
             }   
 
 if __name__ == '__main__':
-    myCamera=camDict['moving']
+    myCamera=camDict['fixed']
     myTopicFull=topicDict['raw']
     
     print('connecting to:'+myCamera+myTopicFull[0]+'...')
