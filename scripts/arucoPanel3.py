@@ -2,7 +2,8 @@
 
 import rospy
 import numpy as np
-
+import sys
+import os
 from sensor_msgs.msg import Image as sensImg
 from sensor_msgs.msg import CameraInfo
 #frofm sensor_msgs.msg import PointCloud2 as sensPCld
@@ -25,9 +26,8 @@ from roscamLibrary3 import nsingleAruRelPos as singleAruRelPos
 #------------------------------------------------
 
 pub = rospy.Publisher('aruco_bridge_opencv', bridge_msg, queue_size=1)
-
+bool_exit=False
 ARUCO_PARAMETERS = aruco.DetectorParameters_create()
-
 aruLibrary={'original':aruco.DICT_ARUCO_ORIGINAL
             ,'51000':aruco.DICT_5X5_1000
             ,'61000':aruco.DICT_6X6_1000
@@ -115,8 +115,10 @@ def callbackRaw(raw_img):
     global targetCounter
     global findNewTarget
     global remaining_targets
-    
-    
+    global bool_exit
+    if bool_exit:
+        cv.destroyAllWindows()
+        os._exit(os.EX_OK)
     cv_image=bridge.imgmsg_to_cv2(raw_img, desired_encoding='passthrough')
     cv_gray=cv.cvtColor(cv_image,cv.COLOR_RGB2GRAY)
     
@@ -151,9 +153,14 @@ def callbackRaw(raw_img):
     msg=bridge_msg()
     msg.success=aruco_success
     if msg.success:
-        msg.x=0.001*msgVector[2] +(recovLenRatio*0.08 if tglWristLengthRecovery else 0)
-        msg.y=0.001*msgVector[0]
-        msg.z=0.001*msgVector[1]
+        #msg.x=0.001*msgVector[2] +(recovLenRatio*0.08 if tglWristLengthRecovery else 0)
+        #msg.y=0.001*msgVector[0]
+        #msg.z=0.001*msgVector[1]
+        msg.x=0.001*msgVector[0]
+        msg.y=0.001*msgVector[1]
+        msg.z=0.001*msgVector[2]
+        msg.vector=msgRotMatrix.flatten()
+        #print(msg.vector)
     pub.publish(msg)
     key = cv.waitKey(12) & 0xFF# key still unused
 #    if key == 27:# 27:esc, ord('q'):q
@@ -171,17 +178,13 @@ tglWristLengthRecovery=1
 recovLenRatio=1
 
 def callback_service(req):
-    global aruco_success
-    global msgVector
-    global msgRotMatrix
-    global targetCounter
-    global findNewTarget
-    global remaining_targets
+    global aruco_success,msgVector,msgRotMatrix,targetCounter,findNewTarget,remaining_targets,bool_exit
     print('Service received')
+    if req.message=="exit":
+        bool_exit=True
     if req.next_aruco:
         if targetCounter<targetListLen-1:
             targetCounter=targetCounter+1
-            
     return cv_serverResponse(
         success=aruco_success,
         moreTargets=remaining_targets,
@@ -212,6 +215,7 @@ def listener(myCam,myTop,myType,myCallk):
     rospy.Subscriber(myCam+myTop,myType,myCallk,queue_size = 1)
     rospy.Publisher('aruco_bridge_opencv', bridge_msg, queue_size=10)
     rospy.Service('cv_server', cv_server, callback_service)
+    
     try:
         rospy.spin()
     except KeyboardInterrupt:#
