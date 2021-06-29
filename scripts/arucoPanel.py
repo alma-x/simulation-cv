@@ -80,7 +80,7 @@ def loadCameraParam(myCam):
 #                        40)
 #                }
 
-targetList=[[1,50],[102,40],[104,40],[106,40],[108,40]]
+targetList=[[1,50],[2,50],[3,50],[4,50],[5,50],[6,50],[7,50],[8,50],[9,50],[10,40],[11,50],[12,50],[13,40],[14,50],[102,40],[104,40],[106,40],[108,40]]
 #targetList=['panelSwitch8','panelSwitch7','panelSwitch6','panelSwitch5','panelSwitch4'
 #            ,'panelSwitch3','panelSwitch2','panelSwitch1']
 #targetList=[[101,40],[102,40],[103,40],[104,40],
@@ -146,6 +146,16 @@ def callbackRaw(raw_img):
                 msgVector=tVect
                 
                 aruco_success=True
+
+                msg=bridge_msg()
+                msg.success=aruco_success
+
+                msg.x=0.001*msgVector[0]
+                msg.y=0.001*msgVector[1]
+                msg.z=0.001*msgVector[2]
+                msg.vector=msgRotMatrix.flatten()
+
+                pub.publish(msg)
                 #remaining_targets=targetListLen-targetCounter-1
                 #if targetCounter<targetListLen-1:
                 #    targetCounter+=1
@@ -159,20 +169,7 @@ def callbackRaw(raw_img):
     #    newSize,_=int(np.shape(detAruImg))
     #    detAruImg=cv.resize(detAruImg,newSize)
     cv.imshow('detected markers',detAruImg)
-    
-    msg=bridge_msg()
-    msg.success=aruco_success
 
-    if msg.success:
-        #msg.x=0.001*msgVector[2] +(recovLenRatio*0.08 if tglWristLengthRecovery else 0)
-        #msg.y=0.001*msgVector[0]
-        #msg.z=0.001*msgVector[1]
-        msg.x=0.001*msgVector[0]
-        msg.y=0.001*msgVector[1]
-        msg.z=0.001*msgVector[2]
-        msg.vector=msgRotMatrix.flatten()
-        #print(msg.vector)
-    pub.publish(msg)
     key = cv.waitKey(12) & 0xFF# key still unused
 #    if key == 27:# 27:esc, ord('q'):q
 #       exit_somehow()
@@ -190,21 +187,27 @@ recovLenRatio=1
 
 def callback_service(req):
     global aruco_success,msgVector,msgRotMatrix,targetCounter,findNewTarget,remaining_targets,bool_exit
+
+    print('Arucopy:ServiceRequested')
+    if req.message=="exit":
+        bool_exit=True
+    #if req.next_aruco:
+    if req.message=="select_next_aruco":
+        #if targetCounter<targetListLen-1:
+        #    targetCounter=targetCounter+1
+        #remaining_targets=targetListLen-targetCounter-1
+        targetCounter=int(req.second_information)-1
+
+
     print('Arucopy:\nService received')
     print('Service received')
     print('Target number:'+str(targetCounter))
-    print('Remaining_targets:'+str(remaining_targets))
-    print('TargetListLen:'+str(targetListLen))
-    if req.message=="exit":
-        bool_exit=True
-    if req.next_aruco:
-        if targetCounter<targetListLen-1:
-            targetCounter=targetCounter+1
-        remaining_targets=targetListLen-targetCounter-1
+    #print('Remaining_targets:'+str(remaining_targets))
+    #print('TargetListLen:'+str(targetListLen))
     return cv_serverResponse(
         success=aruco_success,
         moreTargets=remaining_targets,
-        x=0.001*msgVector[2] +(recovLenRatio*0.08 if tglWristLengthRecovery else 0),#[m]
+        x=0.001*msgVector[2], #+(recovLenRatio*0.08 if tglWristLengthRecovery else 0),#[m]
         y=0.001*msgVector[0],   
         z=0.001*msgVector[1],
         vector=np.ravel(msgRotMatrix)#flattened array
