@@ -147,21 +147,11 @@ def callbackRaw(raw_img):
                 
                 aruco_success=True
 
-                msg=bridge_msg()
-                msg.success=aruco_success
 
-                msg.x=0.001*msgVector[0]
-                msg.y=0.001*msgVector[1]
-                msg.z=0.001*msgVector[2]
-                msg.vector=msgRotMatrix.flatten()
-
-                pub.publish(msg)
                 #remaining_targets=targetListLen-targetCounter-1
                 #if targetCounter<targetListLen-1:
                 #    targetCounter+=1
 
-            else:
-                aruco_success=False
     else:
         aruco_success=False
         detAruImg=cv_image.copy()#
@@ -169,6 +159,15 @@ def callbackRaw(raw_img):
     #    newSize,_=int(np.shape(detAruImg))
     #    detAruImg=cv.resize(detAruImg,newSize)
     cv.imshow('detected markers',detAruImg)
+    msg=bridge_msg()
+    msg.success=aruco_success
+
+    if msg.success:
+        msg.x=0.001*msgVector[0]
+        msg.y=0.001*msgVector[1]
+        msg.z=0.001*msgVector[2]
+        msg.vector=msgRotMatrix.flatten()
+    pub.publish(msg)
 
     key = cv.waitKey(12) & 0xFF# key still unused
 #    if key == 27:# 27:esc, ord('q'):q
@@ -207,9 +206,9 @@ def callback_service(req):
     return cv_serverResponse(
         success=aruco_success,
         moreTargets=remaining_targets,
-        x=0.001*msgVector[2], #+(recovLenRatio*0.08 if tglWristLengthRecovery else 0),#[m]
-        y=0.001*msgVector[0],   
-        z=0.001*msgVector[1],
+        x=0.001*msgVector[0], #+(recovLenRatio*0.08 if tglWristLengthRecovery else 0),#[m]
+        y=0.001*msgVector[1],
+        z=0.001*msgVector[2],
         vector=np.ravel(msgRotMatrix)#flattened array
         )
 
