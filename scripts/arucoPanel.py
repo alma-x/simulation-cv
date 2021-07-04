@@ -161,6 +161,7 @@ def callbackRaw(raw_img):
     cv.imshow('detected markers',detAruImg)
     msg=bridge_msg()
     msg.success=aruco_success
+    msg.id_aruco=targetCounter+1
 
     if msg.success:
         msg.x=0.001*msgVector[0]
