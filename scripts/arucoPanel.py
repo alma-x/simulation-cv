@@ -55,7 +55,7 @@ def loadCameraParam(myCam):
     global cameraFocLen
     
     print('loading camera parameters...')
-    cameraInfoMsg=rospy.wait_for_message(myCam+'/color/camera_info',CameraInfo)
+    cameraInfoMsg=rospy.wait_for_message(myCam+'/camera_info',CameraInfo)
     cameraMatr=np.reshape(cameraInfoMsg.K,[3,3])
     cameraDistCoefs=cameraInfoMsg.D
     cameraFocLen=np.mean([np.ravel(cameraMatr[0])[0],np.ravel(cameraMatr[1])[1]])
@@ -80,7 +80,25 @@ def loadCameraParam(myCam):
 #                        40)
 #                }
 
-targetList=[[1,50],[2,50],[3,50],[4,50],[5,50],[6,50],[7,50],[8,50],[9,50],[10,40],[11,50],[12,50],[13,40],[14,50],[102,40],[104,40],[106,40],[108,40]]
+targetList=[	[1,50],
+		[2,50],
+		[3,50],
+		[4,50],
+		[5,50],
+		[6,50],
+		[7,50],
+		[8,50],
+		[9,50],
+		[10,40],
+		[11,50],
+		[12,50],
+		[13,40],
+		[14,50],
+		[102,40],
+		[104,40],
+		[106,40],
+		[108,40]]
+
 #targetList=['panelSwitch8','panelSwitch7','panelSwitch6','panelSwitch5','panelSwitch4'
 #            ,'panelSwitch3','panelSwitch2','panelSwitch1']
 #targetList=[[101,40],[102,40],[103,40],[104,40],
@@ -221,8 +239,8 @@ def callback_service(req):
 #rotation matrix: tVect=R*tool0_vects
 #
 #        	R= 0 0 1
-#           1 0 0
-#           0 1 0
+#           	   1 0 0
+#           	   0 1 0
 #------------------------------------------------------
 
     
@@ -248,14 +266,22 @@ camDict={'moving':"/camera_image",
 topicDict={'raw':("/color/image_raw",
                     sensImg,
                     callbackRaw)    
-            }   
+            }
+
+   
 
 if __name__ == '__main__':
-    myCamera=camDict['moving']
-    myTopicFull=topicDict['raw']
+    #myCamera=camDict['moving']
+    #myTopicFull=topicDict['raw']
     
-    print('connecting to:'+myCamera+myTopicFull[0]+'...')
-    listener(myCamera,myTopicFull[0],myTopicFull[1],myTopicFull[2])
+    #print('connecting to:'+myCamera+myTopicFull[0]+'...')
+    #listener(myCamera,myTopicFull[0],myTopicFull[1],myTopicFull[2])
+
+    myCamera="/usb_cam"
+    myTopicFull="/image_raw"
+    
+    #print('connecting to:'+myCamera+myTopicFull+'...')
+    listener(myCamera,myTopicFull,sensImg,callbackRaw)
 
 
 
