@@ -155,7 +155,7 @@ def callbackRaw(raw_img):
         
         aruco_success=False     
         for mId, aruPoints in zip(detIds, detCorners):
-            print('ID: ' + str(mId))
+            print('ID: ' + str(mId) + 'Target: ' + str(targetList[targetCounter][0]))
             if mId==targetList[targetCounter][0]:
                 detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
                                               cameraMatr,cameraDistCoefs,tglDrawMark=1)
