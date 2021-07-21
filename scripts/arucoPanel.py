@@ -55,7 +55,7 @@ def loadCameraParam(myCam):
     global cameraFocLen
     
     print('loading camera parameters...')
-    cameraInfoMsg=rospy.wait_for_message(myCam+'/camera_info',CameraInfo)
+    cameraInfoMsg=rospy.wait_for_message(myCam+'/color/camera_info',CameraInfo)
     cameraMatr=np.reshape(cameraInfoMsg.K,[3,3])
     cameraDistCoefs=cameraInfoMsg.D
     cameraFocLen=np.mean([np.ravel(cameraMatr[0])[0],np.ravel(cameraMatr[1])[1]])
@@ -155,7 +155,7 @@ def callbackRaw(raw_img):
         
         aruco_success=False     
         for mId, aruPoints in zip(detIds, detCorners):
-            print('ID: ' + str(mId) + 'Target: ' + str(targetList[targetCounter][0]))
+            #print('ID: ' + str(mId) + 'Target: ' + str(targetList[targetCounter][0]))
             if mId==targetList[targetCounter][0]:
                 detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
                                               cameraMatr,cameraDistCoefs,tglDrawMark=1)
@@ -272,17 +272,19 @@ topicDict={'raw':("/color/image_raw",
    
 
 if __name__ == '__main__':
-    #myCamera=camDict['moving']
-    #myTopicFull=topicDict['raw']
+    myCamera=camDict['moving']
+    myTopicFull=topicDict['raw']
     
-    #print('connecting to:'+myCamera+myTopicFull[0]+'...')
-    #listener(myCamera,myTopicFull[0],myTopicFull[1],myTopicFull[2])
+    print('connecting to:'+myCamera+myTopicFull[0]+'...')
+    listener(myCamera,myTopicFull[0],myTopicFull[1],myTopicFull[2])
 
-    myCamera="/usb_cam"
-    myTopicFull="/image_raw"
+    #myCamera="/usb_cam"
+    #myTopicFull="/image_raw"
     
     #print('connecting to:'+myCamera+myTopicFull+'...')
-    listener(myCamera,myTopicFull,sensImg,callbackRaw)
+    #listener(myCamera,myTopicFull,sensImg,callbackRaw)
+
+
 
 
 
