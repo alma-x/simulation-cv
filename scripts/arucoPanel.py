@@ -207,7 +207,7 @@ recovLenRatio=1
 def callback_service(req):
     global aruco_success,msgVector,msgRotMatrix,targetCounter,findNewTarget,remaining_targets,bool_exit
 
-    print('Arucopy:ServiceRequested')
+    #print('Arucopy:ServiceRequested')
     if req.message=="exit":
         bool_exit=True
     #if req.next_aruco:
@@ -218,9 +218,9 @@ def callback_service(req):
         targetCounter=int(req.second_information)-1
 
 
-    print('Arucopy:\nService received')
-    print('Service received')
-    print('Target number:'+str(targetCounter))
+    #print('Arucopy:\nService received')
+    #print('Service received')
+    #print('Target number:'+str(targetCounter))
     #print('Remaining_targets:'+str(remaining_targets))
     #print('TargetListLen:'+str(targetListLen))
     return cv_serverResponse(
