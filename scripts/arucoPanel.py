@@ -145,7 +145,8 @@ def callbackRaw(raw_img):
     cv_image=bridge.imgmsg_to_cv2(raw_img, desired_encoding='passthrough')
     cv_gray=cv.cvtColor(cv_image,cv.COLOR_RGB2GRAY)
     
-    
+    msg=bridge_msg()
+    msg.aruco_found=[False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False,False]
     (targetMarkId,targetMarkSize)=tuple(targetList[targetCounter])
     detCorners, detIds, _ = aruco.detectMarkers(cv_gray, ARUCO_DICT, parameters=ARUCO_PARAMETERS)
         
@@ -155,7 +156,9 @@ def callbackRaw(raw_img):
         
         aruco_success=False     
         for mId, aruPoints in zip(detIds, detCorners):
-            #print('ID: ' + str(mId) + 'Target: ' + str(targetList[targetCounter][0]))
+            if len(msg.aruco_found)>int(mId):
+                msg.aruco_found[int(mId)]=True
+            #print(mId)
             if mId==targetList[targetCounter][0]:
                 detAruImg,aruDistnc,Pmatr=singleAruRelPos(detAruImg,aruPoints,mId,targetMarkSize,
                                               cameraMatr,cameraDistCoefs,tglDrawMark=1)
@@ -178,7 +181,7 @@ def callbackRaw(raw_img):
     #    newSize,_=int(np.shape(detAruImg))
     #    detAruImg=cv.resize(detAruImg,newSize)
     cv.imshow('detected markers',detAruImg)
-    msg=bridge_msg()
+
     msg.success=aruco_success
     msg.id_aruco=targetCounter+1
 
@@ -187,6 +190,7 @@ def callbackRaw(raw_img):
         msg.y=0.001*msgVector[1]
         msg.z=0.001*msgVector[2]
         msg.vector=msgRotMatrix.flatten()
+    #print(msg.aruco_found)
     pub.publish(msg)
 
     key = cv.waitKey(12) & 0xFF# key still unused
