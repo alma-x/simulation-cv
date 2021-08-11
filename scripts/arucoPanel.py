@@ -276,17 +276,17 @@ topicDict={'raw':("/color/image_raw",
    
 
 if __name__ == '__main__':
-    myCamera=camDict['moving']
-    myTopicFull=topicDict['raw']
+    #myCamera=camDict['moving']
+    #myTopicFull=topicDict['raw']
     
-    print('connecting to:'+myCamera+myTopicFull[0]+'...')
-    listener(myCamera,myTopicFull[0],myTopicFull[1],myTopicFull[2])
+    #print('connecting to:'+myCamera+myTopicFull[0]+'...')
+    #listener(myCamera,myTopicFull[0],myTopicFull[1],myTopicFull[2])
 
-    #myCamera="/usb_cam"
-    #myTopicFull="/image_raw"
+    myCamera="/usb_cam"
+    myTopicFull="/image_raw"
     
-    #print('connecting to:'+myCamera+myTopicFull+'...')
-    #listener(myCamera,myTopicFull,sensImg,callbackRaw)
+    print('connecting to:'+myCamera+myTopicFull+'...')
+    listener(myCamera,myTopicFull,sensImg,callbackRaw)
 
 
 
